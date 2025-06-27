@@ -42,6 +42,26 @@
             gap: 12px;
         }
 
+        .clear-btn {
+            background: transparent;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #6b7280;
+            transition: all 0.15s ease;
+        }
+
+        .clear-btn:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #dc2626;
+        }
+
         .logo {
             font-size: 20px;
             font-weight: 600;
@@ -457,13 +477,19 @@
         <div class="header">
             <div class="header-left">
                 <div class="logo">Live Markdown Editor</div>
+                <button class="clear-btn" onclick="clearLocalStorage()" title="Clear content and start fresh">
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Clear
+                </button>
             </div>
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div class="privacy-notice">
                     <svg class="lock-icon" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                     </svg>
-                    <span>Privacy First: Everything stays in your browser. No data stored.</span>
+                    <span>Privacy First: Auto-saved locally in your browser. No server storage.</span>
                 </div>
                 <a href="https://github.com/Mrutyunjay-Patil/live-md" target="_blank" class="github-link" title="View on GitHub">
                     <svg class="github-icon" viewBox="0 0 24 24">
@@ -626,6 +652,98 @@ Start editing to see the magic happen! 🚀"></textarea>
         let redoStack = [];
         let lastSavedState = '';
 
+        // Auto-save functionality
+        const STORAGE_KEY = 'live-markdown-editor-content';
+        const PANEL_SIZE_KEY = 'live-markdown-editor-panel-size';
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, markdownInput.value);
+            } catch (e) {
+                console.warn('Could not save to localStorage:', e);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const savedContent = localStorage.getItem(STORAGE_KEY);
+                if (savedContent !== null && savedContent.trim() !== '') {
+                    markdownInput.value = savedContent;
+                    lastSavedState = savedContent;
+                    updatePreview();
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Could not load from localStorage:', e);
+            }
+            return false;
+        }
+
+        function savePanelSize() {
+            try {
+                const containerRect = document.querySelector('.main-content').getBoundingClientRect();
+                const editorRect = editorPanel.getBoundingClientRect();
+                const leftWidth = ((editorRect.width) / containerRect.width) * 100;
+                localStorage.setItem(PANEL_SIZE_KEY, leftWidth.toString());
+            } catch (e) {
+                console.warn('Could not save panel size:', e);
+            }
+        }
+
+        function loadPanelSize() {
+            try {
+                const savedSize = localStorage.getItem(PANEL_SIZE_KEY);
+                if (savedSize !== null) {
+                    const leftWidth = parseFloat(savedSize);
+                    if (leftWidth > 20 && leftWidth < 80) {
+                        editorPanel.style.flex = `0 0 ${leftWidth}%`;
+                        previewPanel.style.flex = `0 0 ${100 - leftWidth}%`;
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not load panel size:', e);
+            }
+        }
+
+        function clearLocalStorage() {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(PANEL_SIZE_KEY);
+                markdownInput.value = `# Welcome to the Live Markdown Editor
+
+This is a **real-time** markdown editor with instant preview.
+
+## Features
+- ✅ Live preview as you type
+- ✅ Professional toolbar with toggle functionality  
+- ✅ Copy formatted content to clipboard
+- ✅ Download as PDF
+- ✅ Resizable split view
+- ✅ Auto-save (never lose your work!)
+- ✅ Privacy-first (nothing stored on servers)
+
+### Quick Start
+Try the toolbar buttons above or use keyboard shortcuts:
+- **Ctrl+B** for bold
+- **Ctrl+I** for italic  
+- **Ctrl+K** for links
+
+\`\`\`javascript
+// Code blocks are supported
+console.log('Happy writing!');
+\`\`\`
+
+> This is a blockquote for important notes
+
+Start editing to see the magic happen! 🚀`;
+                lastSavedState = markdownInput.value;
+                updatePreview();
+                showNotification('Content cleared and reset to default!');
+            } catch (e) {
+                console.warn('Could not clear localStorage:', e);
+            }
+        }
+
         function saveState() {
             const currentState = markdownInput.value;
             if (currentState !== lastSavedState) {
@@ -700,6 +818,7 @@ Start editing to see the magic happen! 🚀"></textarea>
             
             markdownInput.focus();
             updatePreview();
+            saveToLocalStorage(); // Auto-save after toolbar actions
         }
 
         function toggleFormat(type) {
@@ -765,6 +884,7 @@ Start editing to see the magic happen! 🚀"></textarea>
             }
             
             updatePreview();
+            saveToLocalStorage(); // Auto-save after toolbar actions
         }
 
         function insertFormat(type) {
@@ -1090,15 +1210,6 @@ Start editing to see the magic happen! 🚀"></textarea>
                 editorPanel.style.flex = `0 0 ${newLeftWidth}%`;
                 previewPanel.style.flex = `0 0 ${100 - newLeftWidth}%`;
             }
-        }
-
-        function stopResize() {
-            isResizing = false;
-            resizer.classList.remove('resizing');
-            document.body.style.userSelect = '';
-            document.body.style.cursor = '';
-            document.removeEventListener('mousemove', handleResize);
-            document.removeEventListener('mouseup', stopResize);
         }
 
         // Initialize
