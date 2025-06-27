@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Markdown Editor & Preview</title>
+    <meta name="description" content="A privacy-first, live markdown editor with instant preview, toolbar, PDF export, and more.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233b82f6'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3EMD%3C/text%3E%3C/svg%3E">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.1/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.3/purify.min.js"></script>
     <style>
@@ -39,10 +41,10 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
         }
 
-        .clear-btn {
+        .clear-btn, .sync-btn {
             background: transparent;
             border: 1px solid #e1e5e9;
             border-radius: 6px;
@@ -60,6 +62,18 @@
             background: #fef2f2;
             border-color: #fca5a5;
             color: #dc2626;
+        }
+
+        .sync-btn:hover {
+            background: #f0f9ff;
+            border-color: #93c5fd;
+            color: #1d4ed8;
+        }
+
+        .sync-btn.active {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1d4ed8;
         }
 
         .logo {
@@ -84,6 +98,7 @@
             flex: 1;
             display: flex;
             background: white;
+            overflow: hidden; /* FIXED: Constrains panel heights */
         }
 
         .editor-panel {
@@ -153,6 +168,7 @@
             resize: none;
             background: white;
             color: #2d3748;
+            overflow-y: auto; /* FIXED: Enables scrolling for the editor */
         }
 
         #markdown-input::placeholder {
@@ -474,32 +490,37 @@
 </head>
 <body>
     <div class="app">
-        <div class="header">
+        <header class="header" role="banner">
             <div class="header-left">
                 <div class="logo">Live Markdown Editor</div>
-                <button class="clear-btn" onclick="clearLocalStorage()" title="Clear content and start fresh">
-                    <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                <button class="clear-btn" onclick="clearLocalStorage()" title="Clear content and start fresh" aria-label="Clear content">
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true" focusable="false">
                         <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
                     Clear
                 </button>
+                <button class="sync-btn" onclick="toggleSyncScroll()" id="sync-btn" title="Toggle synchronized scrolling" aria-label="Toggle sync scroll">
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true" focusable="false">
+                        <path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2h-6M8 7H6a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0v2a2 2 0 002 2h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6"/>
+                    </svg>
+                    Sync Scroll
+                </button>
             </div>
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div class="privacy-notice">
-                    <svg class="lock-icon" viewBox="0 0 20 20">
+                    <svg class="lock-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                     </svg>
                     <span>Privacy First: Auto-saved locally in your browser. No server storage.</span>
                 </div>
-                <a href="https://github.com/Mrutyunjay-Patil/live-md" target="_blank" class="github-link" title="View on GitHub">
-                    <svg class="github-icon" viewBox="0 0 24 24">
+                <a href="https://github.com/Mrutyunjay-Patil/live-md" target="_blank" class="github-link" title="View on GitHub" aria-label="View on GitHub">
+                    <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                     </svg>
                 </a>
             </div>
-        </div>
-
-        <div class="main-content">
+        </header>
+        <main class="main-content" role="main">
             <div class="editor-panel">
                 <div class="toolbar">
                     <button class="toolbar-btn" onclick="toggleFormat('bold')" title="Bold (Ctrl+B)">
@@ -597,624 +618,692 @@ Try the toolbar buttons above or use keyboard shortcuts:
 // Code blocks are supported
 console.log('Happy writing!');
 ```
-
 > This is a blockquote for important notes
-
 Start editing to see the magic happen! 🚀"></textarea>
-                </div>
-            </div>
+</div>
+</div>
 
-            <div class="resizer" id="resizer">
-                <div class="drag-icon">
-                    <div class="drag-dot"></div>
-                    <div class="drag-dot"></div>
-                    <div class="drag-dot"></div>
-                    <div class="drag-dot"></div>
-                    <div class="drag-dot"></div>
-                </div>
-            </div>
-
-            <div class="preview-panel">
-                <div class="preview-header">
-                    <div class="preview-title">Live Preview</div>
-                    <div class="preview-actions">
-                        <button class="action-btn" onclick="copyToClipboard()" id="copy-btn" title="Copy to clipboard">
-                            <svg class="icon copy-icon" viewBox="0 0 24 24">
-                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                            </svg>
-                            <svg class="icon check-icon" viewBox="0 0 24 24" style="display: none;">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                            </svg>
-                        </button>
-                        <button class="action-btn" onclick="downloadPDF()" title="Download as PDF">
-                            <svg class="icon" viewBox="0 0 24 24">
-                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div id="preview-content"></div>
+        <div class="resizer" id="resizer">
+            <div class="drag-icon">
+                <div class="drag-dot"></div>
+                <div class="drag-dot"></div>
+                <div class="drag-dot"></div>
+                <div class="drag-dot"></div>
+                <div class="drag-dot"></div>
             </div>
         </div>
+
+        <div class="preview-panel">
+            <div class="preview-header">
+                <div class="preview-title">Live Preview</div>
+                <div class="preview-actions">
+                    <button class="action-btn" onclick="copyToClipboard()" id="copy-btn" title="Copy to clipboard">
+                        <svg class="icon copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        <svg class="icon check-icon" viewBox="0 0 24 24" style="display: none;">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn" onclick="downloadPDF()" title="Download as PDF">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="preview-content"></div>
+        </div>
     </div>
+</div>
 
-    <div class="notification" id="notification"></div>
+<div class="notification" id="notification" role="status" aria-live="polite"></div>
 
-    <script>
-        const markdownInput = document.getElementById('markdown-input');
-        const previewContent = document.getElementById('preview-content');
-        const resizer = document.getElementById('resizer');
-        const editorPanel = document.querySelector('.editor-panel');
-        const previewPanel = document.querySelector('.preview-panel');
+<script>
+    const markdownInput = document.getElementById('markdown-input');
+    const previewContent = document.getElementById('preview-content');
+    const resizer = document.getElementById('resizer');
+    const editorPanel = document.querySelector('.editor-panel');
+    const previewPanel = document.querySelector('.preview-panel');
 
-        // Undo/Redo functionality
-        let undoStack = [];
-        let redoStack = [];
-        let lastSavedState = '';
+    // Undo/Redo functionality
+    let undoStack = [];
+    let redoStack = [];
+    let lastSavedState = '';
 
-        // Auto-save functionality
-        const STORAGE_KEY = 'live-markdown-editor-content';
-        const PANEL_SIZE_KEY = 'live-markdown-editor-panel-size';
+    // Auto-save functionality
+    const STORAGE_KEY = 'live-markdown-editor-content';
+    const PANEL_SIZE_KEY = 'live-markdown-editor-panel-size';
+    const SYNC_SCROLL_KEY = 'live-markdown-editor-sync-scroll';
 
-        function saveToLocalStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, markdownInput.value);
-            } catch (e) {
-                console.warn('Could not save to localStorage:', e);
-            }
+    // Sync scroll functionality
+    let syncScrollEnabled = false;
+    let isScrollingSyncronized = false;
+
+    function saveToLocalStorage() {
+        try {
+            const content = markdownInput.value;
+            localStorage.setItem(STORAGE_KEY, content);
+        } catch (e) {
+            console.warn('Could not save to localStorage:', e);
+            showNotification('Could not save content.', 'error');
         }
+    }
 
-        function loadFromLocalStorage() {
-            try {
-                const savedContent = localStorage.getItem(STORAGE_KEY);
-                if (savedContent !== null && savedContent.trim() !== '') {
-                    markdownInput.value = savedContent;
-                    lastSavedState = savedContent;
-                    updatePreview();
-                    return true;
-                }
-            } catch (e) {
-                console.warn('Could not load from localStorage:', e);
-            }
-            return false;
-        }
-
-        function savePanelSize() {
-            try {
-                const containerRect = document.querySelector('.main-content').getBoundingClientRect();
-                const editorRect = editorPanel.getBoundingClientRect();
-                const leftWidth = ((editorRect.width) / containerRect.width) * 100;
-                localStorage.setItem(PANEL_SIZE_KEY, leftWidth.toString());
-            } catch (e) {
-                console.warn('Could not save panel size:', e);
-            }
-        }
-
-        function loadPanelSize() {
-            try {
-                const savedSize = localStorage.getItem(PANEL_SIZE_KEY);
-                if (savedSize !== null) {
-                    const leftWidth = parseFloat(savedSize);
-                    if (leftWidth > 20 && leftWidth < 80) {
-                        editorPanel.style.flex = `0 0 ${leftWidth}%`;
-                        previewPanel.style.flex = `0 0 ${100 - leftWidth}%`;
-                    }
-                }
-            } catch (e) {
-                console.warn('Could not load panel size:', e);
-            }
-        }
-
-        function clearLocalStorage() {
-            try {
-                localStorage.removeItem(STORAGE_KEY);
-                localStorage.removeItem(PANEL_SIZE_KEY);
-                markdownInput.value = `# Welcome to the Live Markdown Editor
-
-This is a **real-time** markdown editor with instant preview.
-
-## Features
-- ✅ Live preview as you type
-- ✅ Professional toolbar with toggle functionality  
-- ✅ Copy formatted content to clipboard
-- ✅ Download as PDF
-- ✅ Resizable split view
-- ✅ Auto-save (never lose your work!)
-- ✅ Privacy-first (nothing stored on servers)
-
-### Quick Start
-Try the toolbar buttons above or use keyboard shortcuts:
-- **Ctrl+B** for bold
-- **Ctrl+I** for italic  
-- **Ctrl+K** for links
-
-\`\`\`javascript
-// Code blocks are supported
-console.log('Happy writing!');
-\`\`\`
-
-> This is a blockquote for important notes
-
-Start editing to see the magic happen! 🚀`;
-                lastSavedState = markdownInput.value;
+    function loadFromLocalStorage() {
+        try {
+            const savedContent = localStorage.getItem(STORAGE_KEY);
+            if (savedContent !== null) {
+                markdownInput.value = savedContent;
+                lastSavedState = savedContent;
                 updatePreview();
-                showNotification('Content cleared and reset to default!');
-            } catch (e) {
-                console.warn('Could not clear localStorage:', e);
+                return true;
             }
+        } catch (e) {
+            console.warn('Could not load from localStorage:', e);
         }
+        return false;
+    }
 
-        function saveState() {
-            const currentState = markdownInput.value;
-            if (currentState !== lastSavedState) {
-                undoStack.push(lastSavedState);
-                if (undoStack.length > 50) {
-                    undoStack.shift(); // Keep only last 50 states
-                }
-                redoStack = []; // Clear redo stack when new action is performed
-                lastSavedState = currentState;
-            }
-        }
-
-        function undo() {
-            if (undoStack.length > 0) {
-                redoStack.push(markdownInput.value);
-                const previousState = undoStack.pop();
-                markdownInput.value = previousState;
-                lastSavedState = previousState;
-                updatePreview();
-                updateToolbarStates();
-            }
-        }
-
-        function redo() {
-            if (redoStack.length > 0) {
-                undoStack.push(markdownInput.value);
-                const nextState = redoStack.pop();
-                markdownInput.value = nextState;
-                lastSavedState = nextState;
-                updatePreview();
-                updateToolbarStates();
-            }
-        }
-
-        // Configure marked
-        marked.setOptions({
-            breaks: true,
-            gfm: true,
-            headerIds: false,
-            mangle: false
-        });
-
-        function updatePreview() {
-            const markdownText = markdownInput.value;
-            const htmlContent = marked.parse(markdownText);
-            const cleanHtml = DOMPurify.sanitize(htmlContent);
-            previewContent.innerHTML = cleanHtml;
-        }
-
-        function getSelectedText() {
-            const start = markdownInput.selectionStart;
-            const end = markdownInput.selectionEnd;
-            return {
-                start,
-                end,
-                selectedText: markdownInput.value.substring(start, end),
-                beforeText: markdownInput.value.substring(0, start),
-                afterText: markdownInput.value.substring(end)
-            };
-        }
-
-        function replaceSelection(newText, selectStart = null, selectEnd = null, skipSaveState = false) {
-            if (!skipSaveState) {
-                saveState(); // Save state before making changes
-            }
-            const { start, beforeText, afterText } = getSelectedText();
-            markdownInput.value = beforeText + newText + afterText;
-            
-            if (selectStart !== null) {
-                markdownInput.setSelectionRange(start + selectStart, start + (selectEnd || selectStart));
-            }
-            
-            markdownInput.focus();
-            updatePreview();
-            saveToLocalStorage(); // Auto-save after toolbar actions
-        }
-
-        function toggleFormat(type) {
-            const { selectedText, beforeText, afterText, start, end } = getSelectedText();
-            
-            // Save state before making changes
-            saveState();
-            
-            // Update button states
-            updateToolbarStates();
-            
-            switch (type) {
-                case 'bold':
-                    if (selectedText.startsWith('**') && selectedText.endsWith('**')) {
-                        replaceSelection(selectedText.slice(2, -2), null, null, true);
-                    } else if (beforeText.endsWith('**') && afterText.startsWith('**')) {
-                        markdownInput.value = beforeText.slice(0, -2) + selectedText + afterText.slice(2);
-                        markdownInput.setSelectionRange(start - 2, end - 2);
-                    } else {
-                        replaceSelection(`**${selectedText}**`, 2, 2 + selectedText.length, true);
-                    }
-                    break;
-                    
-                case 'italic':
-                    if (selectedText.startsWith('*') && selectedText.endsWith('*') && !selectedText.startsWith('**')) {
-                        replaceSelection(selectedText.slice(1, -1), null, null, true);
-                    } else if (beforeText.endsWith('*') && afterText.startsWith('*') && !beforeText.endsWith('**')) {
-                        markdownInput.value = beforeText.slice(0, -1) + selectedText + afterText.slice(1);
-                        markdownInput.setSelectionRange(start - 1, end - 1);
-                    } else {
-                        replaceSelection(`*${selectedText}*`, 1, 1 + selectedText.length, true);
-                    }
-                    break;
-                    
-                case 'code':
-                    if (selectedText.startsWith('`') && selectedText.endsWith('`')) {
-                        replaceSelection(selectedText.slice(1, -1), null, null, true);
-                    } else if (beforeText.endsWith('`') && afterText.startsWith('`')) {
-                        markdownInput.value = beforeText.slice(0, -1) + selectedText + afterText.slice(1);
-                        markdownInput.setSelectionRange(start - 1, end - 1);
-                    } else {
-                        replaceSelection(`\`${selectedText}\``, 1, 1 + selectedText.length, true);
-                    }
-                    break;
-                    
-                case 'h1':
-                case 'h2':
-                case 'h3':
-                    const level = type[1];
-                    const hashes = '#'.repeat(level);
-                    const lineStart = beforeText.lastIndexOf('\n') + 1;
-                    const lineEnd = beforeText.length + selectedText.length + afterText.indexOf('\n');
-                    const currentLine = markdownInput.value.substring(lineStart, lineEnd === -1 ? undefined : lineEnd);
-                    
-                    if (currentLine.startsWith(hashes + ' ')) {
-                        const newLine = currentLine.replace(new RegExp(`^#{1,6} `), '');
-                        markdownInput.value = markdownInput.value.substring(0, lineStart) + newLine + markdownInput.value.substring(lineEnd === -1 ? markdownInput.value.length : lineEnd);
-                    } else {
-                        const newLine = currentLine.replace(/^#{1,6} /, '');
-                        markdownInput.value = markdownInput.value.substring(0, lineStart) + hashes + ' ' + newLine + markdownInput.value.substring(lineEnd === -1 ? markdownInput.value.length : lineEnd);
-                    }
-                    break;
-            }
-            
-            updatePreview();
-            saveToLocalStorage(); // Auto-save after toolbar actions
-        }
-
-        function insertFormat(type) {
-            const { selectedText } = getSelectedText();
-            
-            switch (type) {
-                case 'link':
-                    if (selectedText) {
-                        replaceSelection(`[${selectedText}](url)`, selectedText.length + 3, selectedText.length + 6);
-                    } else {
-                        replaceSelection('[text](url)', 1, 5);
-                    }
-                    break;
-                    
-                case 'image':
-                    replaceSelection('![alt text](image-url)', 2, 10);
-                    break;
-                    
-                case 'ul':
-                    if (selectedText) {
-                        const lines = selectedText.split('\n').map(line => `- ${line}`).join('\n');
-                        replaceSelection(lines);
-                    } else {
-                        replaceSelection('- ', 2);
-                    }
-                    break;
-                    
-                case 'ol':
-                    if (selectedText) {
-                        const lines = selectedText.split('\n').map((line, i) => `${i + 1}. ${line}`).join('\n');
-                        replaceSelection(lines);
-                    } else {
-                        replaceSelection('1. ', 3);
-                    }
-                    break;
-                    
-                case 'quote':
-                    if (selectedText) {
-                        const lines = selectedText.split('\n').map(line => `> ${line}`).join('\n');
-                        replaceSelection(lines);
-                    } else {
-                        replaceSelection('> ', 2);
-                    }
-                    break;
-                    
-                case 'code-block':
-                    if (selectedText) {
-                        replaceSelection(`\`\`\`\n${selectedText}\n\`\`\``, 4, 4 + selectedText.length);
-                    } else {
-                        replaceSelection('```\ncode\n```', 4, 8);
-                    }
-                    break;
-                    
-                case 'hr':
-                    replaceSelection('\n---\n', 5);
-                    break;
-            }
-        }
-
-        function updateToolbarStates() {
-            const { selectedText, beforeText, afterText } = getSelectedText();
-            
-            // Reset all active states
-            document.querySelectorAll('.toolbar-btn').forEach(btn => btn.classList.remove('active'));
-            
-            // Check for active formats
-            if ((selectedText.startsWith('**') && selectedText.endsWith('**')) || 
-                (beforeText.endsWith('**') && afterText.startsWith('**'))) {
-                document.querySelector('[onclick="toggleFormat(\'bold\')"]').classList.add('active');
-            }
-            
-            if ((selectedText.startsWith('*') && selectedText.endsWith('*') && !selectedText.startsWith('**')) || 
-                (beforeText.endsWith('*') && afterText.startsWith('*') && !beforeText.endsWith('**'))) {
-                document.querySelector('[onclick="toggleFormat(\'italic\')"]').classList.add('active');
-            }
-            
-            if ((selectedText.startsWith('`') && selectedText.endsWith('`')) || 
-                (beforeText.endsWith('`') && afterText.startsWith('`'))) {
-                document.querySelector('[onclick="toggleFormat(\'code\')"]').classList.add('active');
-            }
-        }
-
-        function copyToClipboard() {
-            const htmlContent = previewContent.innerHTML;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
-            
-            if (navigator.clipboard && navigator.clipboard.write) {
-                const plainText = tempDiv.textContent || tempDiv.innerText || '';
-                const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-                const textBlob = new Blob([plainText], { type: 'text/plain' });
-                
-                const clipboardItem = new ClipboardItem({
-                    'text/html': htmlBlob,
-                    'text/plain': textBlob
-                });
-                
-                navigator.clipboard.write([clipboardItem]).then(() => {
-                    showCopySuccess();
-                    showNotification('Content copied to clipboard!');
-                }).catch(() => {
-                    fallbackCopy(plainText);
-                });
-            } else {
-                fallbackCopy(tempDiv.textContent || tempDiv.innerText || '');
-            }
-        }
-
-        function fallbackCopy(text) {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showCopySuccess();
-                showNotification('Content copied to clipboard!');
-            } catch (err) {
-                showNotification('Copy failed. Please try again.', 'error');
-            }
-            document.body.removeChild(textArea);
-        }
-
-        function showCopySuccess() {
-            const copyBtn = document.getElementById('copy-btn');
-            const copyIcon = copyBtn.querySelector('.copy-icon');
-            const checkIcon = copyBtn.querySelector('.check-icon');
-            
-            copyIcon.style.display = 'none';
-            checkIcon.style.display = 'block';
-            copyBtn.style.color = '#10b981';
-            
-            setTimeout(() => {
-                copyIcon.style.display = 'block';
-                checkIcon.style.display = 'none';
-                copyBtn.style.color = '';
-            }, 2000);
-        }
-
-        function downloadPDF() {
-            // Create a new window for printing
-            const printContent = previewContent.innerHTML;
-            const printStyles = `
-                <style>
-                    @media print {
-                        body { 
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-                            line-height: 1.6; 
-                            max-width: none; 
-                            margin: 0; 
-                            padding: 20px;
-                            color: black;
-                        }
-                        h1, h2, h3, h4, h5, h6 { 
-                            margin-top: 0; 
-                            page-break-after: avoid;
-                            color: black;
-                        }
-                        pre { 
-                            background: #f5f5f5; 
-                            padding: 16px; 
-                            border-radius: 4px; 
-                            overflow-x: auto;
-                            border: 1px solid #ddd;
-                        }
-                        code { 
-                            background: #f5f5f5; 
-                            padding: 2px 4px; 
-                            border-radius: 3px; 
-                        }
-                        blockquote { 
-                            border-left: 4px solid #ddd; 
-                            margin: 0; 
-                            padding-left: 20px; 
-                            color: #666; 
-                        }
-                        table { 
-                            border-collapse: collapse; 
-                            width: 100%; 
-                            page-break-inside: avoid;
-                        }
-                        th, td { 
-                            border: 1px solid #ddd; 
-                            padding: 8px; 
-                            text-align: left; 
-                        }
-                        th { 
-                            background-color: #f5f5f5; 
-                        }
-                        img {
-                            max-width: 100%;
-                            height: auto;
-                        }
-                        a {
-                            color: #0066cc;
-                        }
-                    }
-                </style>
-            `;
-            
-            // Create a blob with the content
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                    <head>
-                        <title>Markdown Document</title>
-                        <meta charset="utf-8">
-                        ${printStyles}
-                    </head>
-                    <body>
-                        ${printContent}
-                    </body>
-                </html>
-            `;
-            
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            
-            // Open in new window for printing
-            const printWindow = window.open(url, '_blank');
-            if (printWindow) {
-                printWindow.addEventListener('load', () => {
-                    setTimeout(() => {
-                        printWindow.print();
-                        URL.revokeObjectURL(url);
-                    }, 100);
-                });
-            } else {
-                // Fallback: trigger browser print dialog
-                window.print();
-                URL.revokeObjectURL(url);
-            }
-            
-            showNotification('PDF download initiated!');
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification${type === 'error' ? ' error' : ''}`;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Event listeners
-        markdownInput.addEventListener('input', updatePreview);
-        markdownInput.addEventListener('selectionchange', updateToolbarStates);
-        markdownInput.addEventListener('mouseup', updateToolbarStates);
-        markdownInput.addEventListener('keyup', updateToolbarStates);
-
-        // Keyboard shortcuts
-        markdownInput.addEventListener('keydown', function(e) {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key.toLowerCase()) {
-                    case 'z':
-                        e.preventDefault();
-                        if (e.shiftKey) {
-                            redo();
-                        } else {
-                            undo();
-                        }
-                        break;
-                    case 'y':
-                        e.preventDefault();
-                        redo();
-                        break;
-                    case 'b':
-                        e.preventDefault();
-                        toggleFormat('bold');
-                        break;
-                    case 'i':
-                        e.preventDefault();
-                        toggleFormat('italic');
-                        break;
-                    case 'k':
-                        e.preventDefault();
-                        insertFormat('link');
-                        break;
-                }
-            }
-            
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                saveState();
-                replaceSelection('  ', 2);
-            }
-        });
-
-        // Resizer functionality
-        let isResizing = false;
-        let startX = 0;
-        let startLeftWidth = 0;
-
-        resizer.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            startX = e.clientX;
-            
+    function savePanelSize() {
+        try {
             const containerRect = document.querySelector('.main-content').getBoundingClientRect();
             const editorRect = editorPanel.getBoundingClientRect();
-            startLeftWidth = ((editorRect.width) / containerRect.width) * 100;
-            
-            resizer.classList.add('resizing');
-            document.body.style.userSelect = 'none';
-            document.body.style.cursor = 'col-resize';
-            
-            document.addEventListener('mousemove', handleResize);
-            document.addEventListener('mouseup', stopResize);
-            e.preventDefault();
-        });
+            const leftWidth = ((editorRect.width) / containerRect.width) * 100;
+            localStorage.setItem(PANEL_SIZE_KEY, leftWidth.toString());
+        } catch (e) {
+            console.warn('Could not save panel size:', e);
+        }
+    }
 
-        function handleResize(e) {
-            if (!isResizing) return;
-            
-            const containerRect = document.querySelector('.main-content').getBoundingClientRect();
-            const deltaX = e.clientX - startX;
-            const deltaPercent = (deltaX / containerRect.width) * 100;
-            const newLeftWidth = startLeftWidth + deltaPercent;
-            
-            if (newLeftWidth > 20 && newLeftWidth < 80) {
-                editorPanel.style.flex = `0 0 ${newLeftWidth}%`;
-                previewPanel.style.flex = `0 0 ${100 - newLeftWidth}%`;
+    function loadPanelSize() {
+        try {
+            const savedSize = localStorage.getItem(PANEL_SIZE_KEY);
+            if (savedSize !== null) {
+                const leftWidth = parseFloat(savedSize);
+                if (leftWidth > 20 && leftWidth < 80) {
+                    editorPanel.style.flex = `0 0 ${leftWidth}%`;
+                    previewPanel.style.flex = `0 0 ${100 - leftWidth}%`;
+                }
             }
+        } catch (e) {
+            console.warn('Could not load panel size:', e);
+        }
+    }
+
+    function saveSyncScrollSetting() {
+        try {
+            localStorage.setItem(SYNC_SCROLL_KEY, syncScrollEnabled.toString());
+        } catch (e) {
+            console.warn('Could not save sync scroll setting:', e);
+        }
+    }
+
+    function loadSyncScrollSetting() {
+        try {
+            const savedSetting = localStorage.getItem(SYNC_SCROLL_KEY);
+            if (savedSetting !== null) {
+                syncScrollEnabled = savedSetting === 'true';
+                updateSyncScrollButton();
+            }
+        } catch (e) {
+            console.warn('Could not load sync scroll setting:', e);
+        }
+    }
+
+    function toggleSyncScroll() {
+        syncScrollEnabled = !syncScrollEnabled;
+        updateSyncScrollButton();
+        saveSyncScrollSetting();
+        showNotification(syncScrollEnabled ? 'Sync scroll enabled' : 'Sync scroll disabled');
+    }
+
+    function updateSyncScrollButton() {
+        const syncBtn = document.getElementById('sync-btn');
+        if (syncScrollEnabled) {
+            syncBtn.classList.add('active');
+        } else {
+            syncBtn.classList.remove('active');
+        }
+    }
+
+    function syncScroll(source) {
+        if (!syncScrollEnabled || isScrollingSyncronized) return;
+        
+        isScrollingSyncronized = true;
+        
+        const sourceEl = source === 'editor' ? markdownInput : previewContent;
+        const targetEl = source === 'editor' ? previewContent : markdownInput;
+        
+        // Prevent division by zero if content is smaller than viewport
+        const scrollableHeight = sourceEl.scrollHeight - sourceEl.clientHeight;
+        if (scrollableHeight <= 0) {
+             setTimeout(() => { isScrollingSyncronized = false; }, 10);
+            return;
         }
 
-        // Initialize
+        const scrollPercentage = sourceEl.scrollTop / scrollableHeight;
+        const targetScrollTop = scrollPercentage * (targetEl.scrollHeight - targetEl.clientHeight);
+        
+        targetEl.scrollTop = targetScrollTop;
+        
+        setTimeout(() => {
+            isScrollingSyncronized = false;
+        }, 50); // Increased timeout for stability
+    }
+
+    function clearLocalStorage() {
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(PANEL_SIZE_KEY);
+            markdownInput.value = `# Welcome to the Live Markdown Editor\n\nThis is a **real-time** markdown editor with instant preview.\n\n## Features\n- ✅ Live preview as you type\n- ✅ Professional toolbar with toggle functionality  \n- ✅ Copy formatted content to clipboard\n- ✅ Download as PDF\n- ✅ Resizable split view\n- ✅ Privacy-first (nothing stored on servers)\n\n### Quick Start\nTry the toolbar buttons above or use keyboard shortcuts:\n- **Ctrl+B** for bold\n- **Ctrl+I** for italic  \n- **Ctrl+K** for links\n\n\u0060\u0060\u0060javascript\n// Code blocks are supported\nconsole.log('Happy writing!');\n\u0060\u0060\u0060\n> This is a blockquote for important notes\nStart editing to see the magic happen! 🚀`;
+            lastSavedState = markdownInput.value;
+            updatePreview();
+            saveToLocalStorage();
+            showNotification('Content cleared and reset to default!');
+        } catch (e) {
+            console.warn('Could not clear localStorage:', e);
+        }
+    }
+    function saveState() {
+        const currentState = markdownInput.value;
+        if (currentState !== lastSavedState) {
+            undoStack.push(lastSavedState);
+            if (undoStack.length > 50) {
+                undoStack.shift(); // Keep only last 50 states
+            }
+            redoStack = []; // Clear redo stack when new action is performed
+            lastSavedState = currentState;
+        }
+    }
+
+    function undo() {
+        if (undoStack.length > 0) {
+            redoStack.push(markdownInput.value);
+            const previousState = undoStack.pop();
+            markdownInput.value = previousState;
+            lastSavedState = previousState;
+            updatePreview();
+            updateToolbarStates();
+            saveToLocalStorage();
+        }
+    }
+
+    function redo() {
+        if (redoStack.length > 0) {
+            undoStack.push(markdownInput.value);
+            const nextState = redoStack.pop();
+            markdownInput.value = nextState;
+            lastSavedState = nextState;
+            updatePreview();
+            updateToolbarStates();
+            saveToLocalStorage();
+        }
+    }
+
+    // Configure marked
+    marked.setOptions({
+        breaks: true,
+        gfm: true,
+        headerIds: false,
+        mangle: false
+    });
+
+    function updatePreview() {
+        const markdownText = markdownInput.value;
+        const htmlContent = marked.parse(markdownText);
+        const cleanHtml = DOMPurify.sanitize(htmlContent);
+        previewContent.innerHTML = cleanHtml;
+    }
+
+    function getSelectedText() {
+        const start = markdownInput.selectionStart;
+        const end = markdownInput.selectionEnd;
+        return {
+            start,
+            end,
+            selectedText: markdownInput.value.substring(start, end),
+            beforeText: markdownInput.value.substring(0, start),
+            afterText: markdownInput.value.substring(end)
+        };
+    }
+
+    function replaceSelection(newText, selectStart = null, selectEnd = null, skipSaveState = false) {
+        if (!skipSaveState) {
+            saveState(); // Save state before making changes
+        }
+        const { start, beforeText, afterText } = getSelectedText();
+        markdownInput.value = beforeText + newText + afterText;
+        
+        if (selectStart !== null) {
+            markdownInput.setSelectionRange(start + selectStart, start + (selectEnd || selectStart));
+        }
+        
+        markdownInput.focus();
+        updatePreview();
+        saveToLocalStorage(); // Auto-save after toolbar actions
+    }
+
+    function toggleFormat(type) {
+        const { selectedText, beforeText, afterText, start, end } = getSelectedText();
+        
+        // Save state before making changes
+        saveState();
+        
+        // Update button states
+        updateToolbarStates();
+        
+        switch (type) {
+            case 'bold':
+                if (selectedText.startsWith('**') && selectedText.endsWith('**')) {
+                    replaceSelection(selectedText.slice(2, -2), null, null, true);
+                } else if (beforeText.endsWith('**') && afterText.startsWith('**')) {
+                    markdownInput.value = beforeText.slice(0, -2) + selectedText + afterText.slice(2);
+                    markdownInput.setSelectionRange(start - 2, end - 2);
+                } else {
+                    replaceSelection(`**${selectedText}**`, 2, 2 + selectedText.length, true);
+                }
+                break;
+                
+            case 'italic':
+                if (selectedText.startsWith('*') && selectedText.endsWith('*') && !selectedText.startsWith('**')) {
+                    replaceSelection(selectedText.slice(1, -1), null, null, true);
+                } else if (beforeText.endsWith('*') && afterText.startsWith('*') && !beforeText.endsWith('**')) {
+                    markdownInput.value = beforeText.slice(0, -1) + selectedText + afterText.slice(1);
+                    markdownInput.setSelectionRange(start - 1, end - 1);
+                } else {
+                    replaceSelection(`*${selectedText}*`, 1, 1 + selectedText.length, true);
+                }
+                break;
+                
+            case 'code':
+                if (selectedText.startsWith('`') && selectedText.endsWith('`')) {
+                    replaceSelection(selectedText.slice(1, -1), null, null, true);
+                } else if (beforeText.endsWith('`') && afterText.startsWith('`')) {
+                    markdownInput.value = beforeText.slice(0, -1) + selectedText + afterText.slice(1);
+                    markdownInput.setSelectionRange(start - 1, end - 1);
+                } else {
+                    replaceSelection(`\`${selectedText}\``, 1, 1 + selectedText.length, true);
+                }
+                break;
+                
+            case 'h1':
+            case 'h2':
+            case 'h3':
+                const level = type[1];
+                const hashes = '#'.repeat(level);
+                const lineStart = beforeText.lastIndexOf('\n') + 1;
+                const lineEnd = beforeText.length + selectedText.length + afterText.indexOf('\n');
+                const currentLine = markdownInput.value.substring(lineStart, lineEnd === -1 ? undefined : lineEnd);
+                
+                if (currentLine.startsWith(hashes + ' ')) {
+                    const newLine = currentLine.replace(new RegExp(`^#{1,6} `), '');
+                    markdownInput.value = markdownInput.value.substring(0, lineStart) + newLine + markdownInput.value.substring(lineEnd === -1 ? markdownInput.value.length : lineEnd);
+                } else {
+                    const newLine = currentLine.replace(/^#{1,6} /, '');
+                    markdownInput.value = markdownInput.value.substring(0, lineStart) + hashes + ' ' + newLine + markdownInput.value.substring(lineEnd === -1 ? markdownInput.value.length : lineEnd);
+                }
+                break;
+        }
+        
+        updatePreview();
+        saveToLocalStorage(); // Auto-save after toolbar actions
+    }
+
+    function insertFormat(type) {
+        const { selectedText } = getSelectedText();
+        
+        switch (type) {
+            case 'link':
+                if (selectedText) {
+                    replaceSelection(`[${selectedText}](url)`, selectedText.length + 3, selectedText.length + 6);
+                } else {
+                    replaceSelection('[text](url)', 1, 5);
+                }
+                break;
+                
+            case 'image':
+                replaceSelection('![alt text](image-url)', 2, 10);
+                break;
+                
+            case 'ul':
+                if (selectedText) {
+                    const lines = selectedText.split('\n').map(line => `- ${line}`).join('\n');
+                    replaceSelection(lines);
+                } else {
+                    replaceSelection('- ', 2);
+                }
+                break;
+                
+            case 'ol':
+                if (selectedText) {
+                    const lines = selectedText.split('\n').map((line, i) => `${i + 1}. ${line}`).join('\n');
+                    replaceSelection(lines);
+                } else {
+                    replaceSelection('1. ', 3);
+                }
+                break;
+                
+            case 'quote':
+                if (selectedText) {
+                    const lines = selectedText.split('\n').map(line => `> ${line}`).join('\n');
+                    replaceSelection(lines);
+                } else {
+                    replaceSelection('> ', 2);
+                }
+                break;
+                
+            case 'code-block':
+                if (selectedText) {
+                    replaceSelection(`\`\`\`\n${selectedText}\n\`\`\``, 4, 4 + selectedText.length);
+                } else {
+                    replaceSelection('```\ncode\n```', 4, 8);
+                }
+                break;
+                
+            case 'hr':
+                replaceSelection('\n---\n', 5);
+                break;
+        }
+    }
+
+    function updateToolbarStates() {
+        const { selectedText, beforeText, afterText } = getSelectedText();
+        
+        // Reset all active states
+        document.querySelectorAll('.toolbar-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Check for active formats
+        if ((selectedText.startsWith('**') && selectedText.endsWith('**')) || 
+            (beforeText.endsWith('**') && afterText.startsWith('**'))) {
+            document.querySelector('[onclick="toggleFormat(\'bold\')"]').classList.add('active');
+        }
+        
+        if ((selectedText.startsWith('*') && selectedText.endsWith('*') && !selectedText.startsWith('**')) || 
+            (beforeText.endsWith('*') && afterText.startsWith('*') && !beforeText.endsWith('**'))) {
+            document.querySelector('[onclick="toggleFormat(\'italic\')"]').classList.add('active');
+        }
+        
+        if ((selectedText.startsWith('`') && selectedText.endsWith('`')) || 
+            (beforeText.endsWith('`') && afterText.startsWith('`'))) {
+            document.querySelector('[onclick="toggleFormat(\'code\')"]').classList.add('active');
+        }
+    }
+
+    function copyToClipboard() {
+        const htmlContent = previewContent.innerHTML;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        
+        if (navigator.clipboard && navigator.clipboard.write) {
+            const plainText = tempDiv.textContent || tempDiv.innerText || '';
+            const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+            const textBlob = new Blob([plainText], { type: 'text/plain' });
+            
+            const clipboardItem = new ClipboardItem({
+                'text/html': htmlBlob,
+                'text/plain': textBlob
+            });
+            
+            navigator.clipboard.write([clipboardItem]).then(() => {
+                showCopySuccess();
+                showNotification('Content copied to clipboard!');
+            }).catch(() => {
+                fallbackCopy(plainText);
+            });
+        } else {
+            fallbackCopy(tempDiv.textContent || tempDiv.innerText || '');
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showCopySuccess();
+            showNotification('Content copied to clipboard!');
+        } catch (err) {
+            showNotification('Copy failed. Please try again.', 'error');
+        }
+        document.body.removeChild(textArea);
+    }
+
+    function showCopySuccess() {
+        const copyBtn = document.getElementById('copy-btn');
+        const copyIcon = copyBtn.querySelector('.copy-icon');
+        const checkIcon = copyBtn.querySelector('.check-icon');
+        
+        copyIcon.style.display = 'none';
+        checkIcon.style.display = 'block';
+        copyBtn.style.color = '#10b981';
+        
+        setTimeout(() => {
+            copyIcon.style.display = 'block';
+            checkIcon.style.display = 'none';
+            copyBtn.style.color = '';
+        }, 2000);
+    }
+
+    function downloadPDF() {
+        // Create a new window for printing
+        const printContent = previewContent.innerHTML;
+        const printStyles = `
+            <style>
+                @media print {
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+                        line-height: 1.6; 
+                        max-width: none; 
+                        margin: 0; 
+                        padding: 20px;
+                        color: black;
+                    }
+                    h1, h2, h3, h4, h5, h6 { 
+                        margin-top: 0; 
+                        page-break-after: avoid;
+                        color: black;
+                    }
+                    pre { 
+                        background: #f5f5f5; 
+                        padding: 16px; 
+                        border-radius: 4px; 
+                        overflow-x: auto;
+                        border: 1px solid #ddd;
+                    }
+                    code { 
+                        background: #f5f5f5; 
+                        padding: 2px 4px; 
+                        border-radius: 3px; 
+                    }
+                    blockquote { 
+                        border-left: 4px solid #ddd; 
+                        margin: 0; 
+                        padding-left: 20px; 
+                        color: #666; 
+                    }
+                    table { 
+                        border-collapse: collapse; 
+                        width: 100%; 
+                        page-break-inside: avoid;
+                    }
+                    th, td { 
+                        border: 1px solid #ddd; 
+                        padding: 8px; 
+                        text-align: left; 
+                    }
+                    th { 
+                        background-color: #f5f5f5; 
+                    }
+                    img {
+                        max-width: 100%;
+                        height: auto;
+                    }
+                    a {
+                        color: #0066cc;
+                    }
+                }
+            </style>
+        `;
+        
+        // Create a blob with the content
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>Markdown Document</title>
+                    <meta charset="utf-8">
+                    ${printStyles}
+                </head>
+                <body>
+                    ${printContent}
+                </body>
+            </html>
+        `;
+        
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        
+        // Open in new window for printing
+        const printWindow = window.open(url, '_blank');
+        if (printWindow) {
+            printWindow.addEventListener('load', () => {
+                setTimeout(() => {
+                    printWindow.print();
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
+        } else {
+            // Fallback: trigger browser print dialog
+            window.print();
+            URL.revokeObjectURL(url);
+        }
+        
+        showNotification('PDF download initiated!');
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification${type === 'error' ? ' error' : ''}`;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // Event listeners
+    markdownInput.addEventListener('input', () => {
         updatePreview();
         updateToolbarStates();
-    </script>
+        saveToLocalStorage();
+    });
+    markdownInput.addEventListener('mouseup', updateToolbarStates);
+    markdownInput.addEventListener('keyup', updateToolbarStates);
+    
+    // FIXED: Added event listeners for sync scroll
+    markdownInput.addEventListener('scroll', () => syncScroll('editor'));
+    previewContent.addEventListener('scroll', () => syncScroll('preview'));
+
+
+    // Keyboard shortcuts
+    markdownInput.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key.toLowerCase()) {
+                case 'z':
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        redo();
+                    } else {
+                        undo();
+                    }
+                    break;
+                case 'y':
+                    e.preventDefault();
+                    redo();
+                    break;
+                case 'b':
+                    e.preventDefault();
+                    toggleFormat('bold');
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    toggleFormat('italic');
+                    break;
+                case 'k':
+                    e.preventDefault();
+                    insertFormat('link');
+                    break;
+            }
+        }
+        
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            saveState();
+            replaceSelection('  ', 2);
+        }
+    });
+
+    // Resizer functionality
+    let isResizing = false;
+    let startX = 0;
+    let startLeftWidth = 0;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        
+        const containerRect = document.querySelector('.main-content').getBoundingClientRect();
+        const editorRect = editorPanel.getBoundingClientRect();
+        startLeftWidth = ((editorRect.width) / containerRect.width) * 100;
+        
+        resizer.classList.add('resizing');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        
+        document.addEventListener('mousemove', handleResize);
+        document.addEventListener('mouseup', stopResize);
+        e.preventDefault();
+    });
+
+    function handleResize(e) {
+        if (!isResizing) return;
+        
+        const containerRect = document.querySelector('.main-content').getBoundingClientRect();
+        const deltaX = e.clientX - startX;
+        const deltaPercent = (deltaX / containerRect.width) * 100;
+        let newLeftWidth = startLeftWidth + deltaPercent;
+        
+        // Clamp the width between 20% and 80%
+        newLeftWidth = Math.max(20, Math.min(80, newLeftWidth));
+
+        editorPanel.style.flex = `0 0 ${newLeftWidth}%`;
+        previewPanel.style.flex = `0 0 ${100 - newLeftWidth}%`;
+    }
+
+    function stopResize() {
+        isResizing = false;
+        resizer.classList.remove('resizing');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', handleResize);
+        document.removeEventListener('mouseup', stopResize);
+        
+        // Save panel size
+        savePanelSize();
+    }
+
+    // FIXED: Initialize the application on page load
+    if (!loadFromLocalStorage()) {
+        // If no content in local storage, render the default text
+        updatePreview();
+    }
+    loadPanelSize();
+    loadSyncScrollSetting();
+    updateToolbarStates();
+</script>
 </body>
 </html>
